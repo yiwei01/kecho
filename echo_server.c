@@ -49,7 +49,8 @@ static int send_request(struct socket *sock, unsigned char *buf, size_t size)
 
     printk(MODULE_NAME ": start send request.\n");
 
-    length = kernel_sendmsg(sock, &msg, &vec, 1, strlen(buf) - 1);
+    length = kernel_sendmsg(sock, &msg, &vec, 1,
+                            strlen(buf));  //  send with null-character
 
     printk(MODULE_NAME ": send request = %s\n", buf);
 
@@ -73,6 +74,7 @@ static int echo_server_worker(void *arg)
     }
 
     while (!kthread_should_stop()) {
+        memset(buf, '\0', BUF_SIZE);  // initialize buf with null-character
         res = get_request(sock, buf, BUF_SIZE - 1);
         if (res <= 0) {
             if (res) {
@@ -88,8 +90,9 @@ static int echo_server_worker(void *arg)
         }
     }
 
-    res = get_request(sock, buf, BUF_SIZE - 1);
-    res = send_request(sock, buf, strlen(buf));
+    /* remove unnecessary statement  */
+    // res = get_request(sock, buf, BUF_SIZE - 1);
+    // res = send_request(sock, buf, strlen(buf));
 
     kernel_sock_shutdown(sock, SHUT_RDWR);
     sock_release(sock);
